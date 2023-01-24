@@ -1,0 +1,53 @@
+/* 
+PROBLEM 1: Julia asked her students to create some coding challenges. 
+- Write a query to print the hacker_id, name, and the total number of challenges created by each student. 
+- Sort your results by the total number of challenges in descending order. If more than one student created the same number of challenges, then sort the result by hacker_id. 
+- If more than one student created the same number of challenges and the count is less than the maximum number of challenges created, then exclude those students from the result.
+*/
+
+/*
+QUERY:
+*/
+
+WITH TEMP AS 
+(
+SELECT Hackers.hacker_id AS h_id, Hackers.name AS h_name, 
+    COUNT(Challenges.challenge_id) AS total_challenges
+    FROM Hackers
+    JOIN Challenges
+    ON Hackers.hacker_id = Challenges.hacker_id
+    GROUP BY Hackers.hacker_id, Hackers.name
+)
+SELECT * FROM TEMP
+WHERE total_challenges IN 
+    (SELECT total_challenges FROM TEMP
+    GROUP BY total_challenges
+    HAVING COUNT(total_challenges) = 1) OR
+    total_challenges = (SELECT MAX(total_challenges) FROM TEMP)
+    ORDER BY total_challenges DESC, h_id; 
+    
+    
+/* PROBLEM 2: The total score of a hacker is the sum of their maximum scores for all of the challenges. 
+- Write a query to print the hacker_id, name, and total score of the hackers ordered by the descending score. 
+- If more than one hacker achieved the same total score, then sort the result by ascending hacker_id. 
+- Exclude all hackers with a total score of 0 from your result.*/
+
+/*
+QUERY:
+*/
+
+WITH TEMP AS
+(
+SELECT h.hacker_id AS h_id, h.name AS name, s.challenge_id AS c_id,
+    MAX(s.score) AS max_score
+    FROM Hackers h
+    JOIN Submissions s
+    ON h.hacker_id = s.hacker_id
+    GROUP BY s.challenge_id, h.hacker_id, h.name
+)
+SELECT h_id, name, SUM(max_score) AS total_score
+    FROM TEMP
+    GROUP BY h_id, name
+    HAVING SUM(max_score) != 0
+    ORDER BY SUM(max_score) DESC, h_id ASC;
+    
